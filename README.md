@@ -76,6 +76,12 @@ K-means->GMM->EM
 
 极大似然估计->EM
 
+GMM
+
+高斯混合模型，无监督模型聚类，k-Means。
+
+
+
 ## [极大似然估计](#content)
 
 

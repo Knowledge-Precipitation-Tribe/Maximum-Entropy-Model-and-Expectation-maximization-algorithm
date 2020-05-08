@@ -348,9 +348,13 @@ l(\theta)=\sum_{i=1}^{m} \log \sum_{z} P\left(x^{i}, z ; \theta\right) &=\sum_{i
 & \geq \sum_{i=1}^{m} \sum_{z^{(i)}} Q_{i}\left(z^{(i)}\right) \log \frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{Q_{i}\left(z^{(i)}\right)}
 \end{aligned}
 $$
-这里我们还要注意一下。
+这里我们还要注意一下这个式子
+$$
+\sum_{z^{(i)}} Q_{i}\left(z^{(i)}\right)\frac{p\left(x^{(i)}, z^{(i)} ; \theta\right)}{Q_{i}\left(z^{(i)}\right)}
+$$
+这个代表什么意思呀？这个不就是$\frac{p\left(x^{(i)}, z^{(i)} ; \theta\right)}{Q_{i}\left(z^{(i)}\right)}$的期望么？（不理解的可以翻看一下期望的公式）
 
-这里用到了<a href = "#Jensen不等式">Jensen不等式</a>，将等号变为来大于等于号，而且因为这里的对数函数为凹函数，所以得出这个结论
+这里用到了<a href = "#Jensen不等式">Jensen不等式</a>，将等号变为大于等于号，而且因为这里的对数函数为凹函数，所以得出这个结论
 $$
 f(E(x)) \geq E(f(x)) \quad \text { 如果 } f(x) \text { 是凹函数 }
 $$
@@ -366,11 +370,19 @@ $$
 $$
 \left.Q_{i}\left(z^{(i)}\right)=\frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{\sum_{z} P\left(x^{(i)}, z^{(i)} ; \theta\right)}=\frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{P\left(x^{(i)} ; \theta\right)}=P\left(z^{(i)} | x^{(i)} ; \theta\right)\right.
 $$
-也就是说令$Q_i$为$\theta$的一个条件概率时就可以满足上面的条件。现在如果我们极大化这个式子
+也就是说令$Q_i$为$\theta$的一个条件概率时就可以满足上面的条件。到这里就是EM算法中的E。
+
+现在如果我们极大化这个式子
 $$
 \theta := \arg \max _{\theta} \sum_{i=1}^{m} \sum_{z^{(i)}} Q_{i}\left(z^{(i)}\right) \log \frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{Q_{i}\left(z^{(i)}\right)}
 $$
-也就意味着在寻找似然函数$l(\theta)$的下界。发现没有我们将原来复杂的一个问题简单化了，现在我们尽可能的让上面的式子求其最大值，直到这个最大值等于原本的似然函数$l(\theta)$，我们也就间接的得到了似然函数$l(\theta)$的极大值，有点绕，但是我们能得到一个信息，就是可以求似然函数的极大值了。现在我们把上面式子中的常数项去掉再看一下
+也就意味着在寻找似然函数$l(\theta)$的下界。发现没有我们将原来复杂的一个问题简单化了，现在我们尽可能的让上面的式子求其最大值，直到这个最大值等于原本的似然函数$l(\theta)$，我们也就间接的得到了似然函数$l(\theta)$的极大值，有点绕，但是我们能得到一个信息，就是可以求似然函数的极大值了。这个下界我们不妨用$J$来表示，且$J$与$Q_i$有关。
+
+![theta](img/theta.jpeg)
+
+固定$\theta_{1}$，调整$Q_i$使下界$J$与似然函数在$\theta_{1}$点处相等，然后固定$Q_i$，调整$\theta$使得下界$J$达到最大值，此时得到新的$\theta_{2}$，然后再固定$\theta_{2}$，调整$Q_i$使得下界$J$与似然函数相等，重复这个过程，直到收敛至似然函数的最大值。
+
+现在我们把上面式子中的常数项去掉再看一下
 $$
 \theta := \arg \max _{\theta} \sum_{i=1}^{m} \sum_{z^{(i)}} Q_{i}\left(z^{(i)}\right) \log P\left(x^{(i)}, z^{(i)} ; \theta\right)
 $$
@@ -378,7 +390,32 @@ $$
 
 至此整个EM算法的数学公式推导过程已经完毕了。
 
+## [EM算法流程](#content)
 
+参考自EM算法原理总结$^{[4]}$。
+
+EM算法的整体流程如下：
+
+输入：数据$\left\{x^{(1)}, x^{(2)}, \cdots, x^{(m)}\right\}$，最大迭代次数J
+
+（1）先验给出模型的初始化参数$\theta$
+
+（2）for i from 1 to J:
+
+​    （a）E: 计算期望
+$$
+\begin{aligned}
+&\left.Q_{i}\left(z^{(i)}\right)=P\left(z^{(i)} | x^{(i)}, \theta^{j}\right)\right)\\
+&L\left(\theta, \theta^{j}\right)=\sum_{i=1}^{m} \sum_{z^{(i)}} Q_{i}\left(z^{(i)}\right) \log P\left(x^{(i)}, z^{(i)} ; \theta\right)
+\end{aligned}
+$$
+​    （b）M: 最大化$L\left(\theta, \theta^{j}\right)$，得到$\theta^{j+1}$：
+$$
+\theta^{j+1}=\arg \max _{\theta} L\left(\theta, \theta^{j}\right)
+$$
+​    （c）如果已收敛，则算法结束，否则继续回到步骤（a）进行迭代
+
+输出：模型参数$\theta$
 
 ## [参考文献](#content)
 

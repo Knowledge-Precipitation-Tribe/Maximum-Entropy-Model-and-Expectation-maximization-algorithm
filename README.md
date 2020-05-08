@@ -27,6 +27,7 @@ Maximum Entropy Model and Expectation-maximization algorithm，最大熵模型�
     - <a href = "#例子1">例子1</a>
     - <a href = "#例子2">例子2</a>
   - <a href = "#数学推导">数学推导</a>
+  - <a href = "#EM算法流程">EM算法流程</a>
 - <a href = "#参考文献">参考文献</a>
 
 # [熵等相关概念](#content)

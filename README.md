@@ -329,11 +329,54 @@ $P_B =（3+3）/10 = 0.6$
 
 ## [数学推导](#content)
 
-假定
+假定我们现在有训练集$\left\{x^{(1)}, x^{(2)}, \cdots, x^{(m)}\right\}$，包含m个独立的样本，我们现在希望从中找到该组数据的模型的参数$\theta$。为了求解这个问题，我们先取参数的对数极大似然
+$$
+l(\theta)=\sum_{i=1}^{m} \log p(x^{i} ; \theta)
+$$
+但是我们不要忘了，我们还有隐变量$z=$$
+\left(z^{1}, z^{2}, \ldots z^{m}\right)
+$，我们也要把z添加到似然函数当中去
+$$
+l(\theta)=\sum_{i=1}^{m} \log \sum_{z} p(x^{i}, z ; \theta)
+$$
+正常极大似然估计是最大化上面那个式子，求导令其得0求得参数值，但是这里明显无法直接求出参数的。所以我们需要一些技巧来求解这个似然函数。
 
+我们令$Q_i$代表隐变量$z$的一个分布，现在我们来改造一下似然函数(这里就是上下同时乘以$Q_i$)
+$$
+\begin{aligned}
+l(\theta)=\sum_{i=1}^{m} \log \sum_{z} P\left(x^{i}, z ; \theta\right) &=\sum_{i=1}^{m} \log \sum_{Z^{(i)}} Q_{i}\left(z^{(i)}\right) \frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{Q_{i}\left(z^{(i)}\right)}           \\
+& \geq \sum_{i=1}^{m} \sum_{z^{(i)}} Q_{i}\left(z^{(i)}\right) \log \frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{Q_{i}\left(z^{(i)}\right)}
+\end{aligned}
+$$
+这里我们还要注意一下。
 
+这里用到了<a href = "#Jensen不等式">Jensen不等式</a>，将等号变为来大于等于号，而且因为这里的对数函数为凹函数，所以得出这个结论
+$$
+f(E(x)) \geq E(f(x)) \quad \text { 如果 } f(x) \text { 是凹函数 }
+$$
+但是我们还要考虑的一点是，什么情况下才能取到这个等号。
+$$
+\frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{Q_{i}\left(z^{(i)}\right)}=c, c \text { 为常数 }
+$$
+我们只有令上面这个式子等于c也就是为一个定值时才能取到等号。而且$Q_i$是一个分布，所以满足
+$$
+\sum_{z} Q_{i}\left(z^{(i)}\right)=1
+$$
+这样结合上面的公式，我们得到这样一个结果
+$$
+\left.Q_{i}\left(z^{(i)}\right)=\frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{\sum_{z} P\left(x^{(i)}, z^{(i)} ; \theta\right)}=\frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{P\left(x^{(i)} ; \theta\right)}=P\left(z^{(i)} | x^{(i)} ; \theta\right)\right.
+$$
+也就是说令$Q_i$为$\theta$的一个条件概率时就可以满足上面的条件。现在如果我们极大化这个式子
+$$
+\theta := \arg \max _{\theta} \sum_{i=1}^{m} \sum_{z^{(i)}} Q_{i}\left(z^{(i)}\right) \log \frac{P\left(x^{(i)}, z^{(i)} ; \theta\right)}{Q_{i}\left(z^{(i)}\right)}
+$$
+也就意味着在寻找似然函数$l(\theta)$的下界。发现没有我们将原来复杂的一个问题简单化了，现在我们尽可能的让上面的式子求其最大值，直到这个最大值等于原本的似然函数$l(\theta)$，我们也就间接的得到了似然函数$l(\theta)$的极大值，有点绕，但是我们能得到一个信息，就是可以求似然函数的极大值了。现在我们把上面式子中的常数项去掉再看一下
+$$
+\theta := \arg \max _{\theta} \sum_{i=1}^{m} \sum_{z^{(i)}} Q_{i}\left(z^{(i)}\right) \log P\left(x^{(i)}, z^{(i)} ; \theta\right)
+$$
+上面这个式子就是EM算法中的M。
 
-
+至此整个EM算法的数学公式推导过程已经完毕了。
 
 
 

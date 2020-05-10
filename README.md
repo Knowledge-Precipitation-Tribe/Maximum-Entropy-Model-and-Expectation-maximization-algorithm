@@ -421,9 +421,71 @@ $$
 输出：模型参数$\theta$
 
 ## [代码实现](#content)
+
+### [二维高斯分布](#content)
+
+多维变量$X=(x_1,x_2,...,x_n)$的联合概率密度函数为：
+
+$$
+f(X)=\frac{1}{(2 \pi)^{d / 2}|\Sigma|^{1 / 2}} \exp \left[-\frac{1}{2}(X-u)^{T} \Sigma^{-1}(X-u)\right], X=\left(x_{1}, x_{2} \dots x_{n}\right)
+$$
+
+其中：
+
+　　- $d$：变量维度。对于二维高斯分布，有d=2;
+  
+　　- $u=(u_1,u_2,...,u_n)$：各位变量的均值；
+  
+　　- $Σ$：协方差矩阵，描述各维变量之间的相关度。对于二维高斯分布，有：
+
+$$
+\Sigma=\left(\begin{array}{ll}
+\delta_{11} & \delta_{12} \\
+\delta_{21} & \delta_{22}
+\end{array}\right)
+$$
+
 ### [数据解析](#content)
 
+**第一个例子**
+$$
+u=(0.5 \quad 0.5), \Sigma=\left(\begin{array}{ll}
+1 & 0 \\
+0 & 3
+\end{array}\right)
+$$
+![ex1](img/ex1.png)
 
+第二个例子**
+$$
+u=(5.5 \quad 2.5), \Sigma=\left(\begin{array}{ll}
+2 & 0 \\
+0 & 2
+\end{array}\right)
+$$
+![ex2](img/ex2.png)
+
+**第三个例子**
+$$
+u=(1 \quad 7), \Sigma=\left(\begin{array}{ll}
+6 & 0 \\
+0 & 2
+\end{array}\right)
+$$
+![ex3](img/ex3.png)
+
+**第四个例子**
+$$
+u=(9 \quad 4.5), \Sigma=\left(\begin{array}{ll}
+1 & -1 \\
+-1 & 3
+\end{array}\right)
+$$
+![ex4](img/ex4.png)
+
+**汇总图**
+
+![clusters](img/clusters.png)
 
 ## [参考文献](#content)
 

@@ -28,6 +28,8 @@ Maximum Entropy Model and Expectation-maximization algorithm，最大熵模型�
     - <a href = "#例子2">例子2</a>
   - <a href = "#数学推导">数学推导</a>
   - <a href = "#EM算法流程">EM算法流程</a>
+  - <a href = "#代码实现">代码实现</a>
+    - <a href = "#数据可视化">数据可视化</a>
 - <a href = "#参考文献">参考文献</a>
 
 # [熵等相关概念](#content)
@@ -417,6 +419,11 @@ $$
 ​    （c）如果已收敛，则算法结束，否则继续回到步骤（a）进行迭代
 
 输出：模型参数$\theta$
+
+## [代码实现](#content)
+### [数据解析](#content)
+
+
 
 ## [参考文献](#content)
 

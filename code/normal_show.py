@@ -30,13 +30,13 @@ def plot_clusters(X, Mu_true, Var_true, ang = 0):
     plt.show()
 
 # 画出聚类图像
-def plot_cluster(X, Mu_true, Var_true):
+def plot_cluster(X, Mu_true, Var_true, color ,ang = 0):
     plt.figure(figsize=(10, 8))
     plt.axis([-10, 15, -5, 15])
     ax = plt.gca()
-    plt.scatter(X[:, 0], X[:, 1], s=5, c='b')
-    plot_args = {'fc': 'None', 'lw': 2, 'edgecolor': 'b', 'alpha': 0.5}
-    ellipse = Ellipse(Mu_true, 3 * Var_true[0], 3 * Var_true[1], angle=0, **plot_args)
+    plt.scatter(X[:, 0], X[:, 1], s=5, c=color)
+    plot_args = {'fc': 'None', 'lw': 2, 'edgecolor': color, 'alpha': 0.5}
+    ellipse = Ellipse(Mu_true, 3 * Var_true[0], 3 * Var_true[1], angle=ang, **plot_args)
     ax.add_patch(ellipse)
     plt.show()
 
@@ -53,19 +53,19 @@ if __name__ == "__main__":
     # 第一簇的数据
     num1, mu1, var1 = nums[0], true_Mu[0], true_Var[0]
     X1 = np.random.multivariate_normal(mu1, var[0], num1)
-    plot_cluster(X1, [0.5, 0.5], [1, 3])
+    plot_cluster(X1, [0.5, 0.5], [1, 3], 'b')
     # 第二簇的数据
     num2, mu2, var2 = nums[1], true_Mu[1], true_Var[1]
     X2 = np.random.multivariate_normal(mu2, var[1], num2)
-    plot_cluster(X2, [5.5, 2.5], [2,2])
+    plot_cluster(X2, [5.5, 2.5], [2,2], 'g')
     # 第三簇的数据
     num3, mu3, var3 = nums[2], true_Mu[2], true_Var[2]
     X3 = np.random.multivariate_normal(mu3, var[2], num3)
-    plot_cluster(X3, [1, 7], [6, 2])
+    plot_cluster(X3, [1, 7], [6, 2], 'r')
     # 第四簇的数据
     num4, mu4, var4 = nums[3], true_Mu[3], true_Var[3]
     X4 = np.random.multivariate_normal(mu4, var[3], num4)
-    plot_cluster(X3, [1, 7], [6, 2])
+    plot_cluster(X4, [9, 4.5], [1, 3], 'c' ,25)
     X = [X1, X2, X3, X4]
 
     # plot_clusters(X1, X2, X3, X4, true_Mu, true_Var)

@@ -39,6 +39,7 @@ def generate_X(true_Mu, true_Var):
     plt.show()
     return X
 
+# E步骤更新W，也就是第i个变量属于第m簇的概率
 # 更新W
 def update_W(X, Mu, Var, Pi):
     n_points, n_clusters = len(X), len(Pi)
@@ -48,7 +49,7 @@ def update_W(X, Mu, Var, Pi):
     W = pdfs / pdfs.sum(axis=1).reshape(-1, 1)
     return W
 
-
+# 根据更新的W，更新每一簇的占比
 # 更新pi
 def update_Pi(W):
     Pi = W.sum(axis=0) / W.sum()
@@ -83,7 +84,7 @@ def plot_clusters(X, Mu, Var, Mu_true=None, Var_true=None):
             ax.add_patch(ellipse)
     plt.show()
 
-
+# M步根据更新的W和PI来跟新均值Mu与方差Var
 # 更新Mu
 def update_Mu(X, W):
     n_clusters = W.shape[1]
@@ -108,13 +109,13 @@ if __name__ == '__main__':
     true_Var = [[1, 3], [2, 2], [6, 2]]
     X = generate_X(true_Mu, true_Var)
     # 初始化
-    n_clusters = 3
+    n_clusters = 3 #聚类的个数
     n_points = len(X)
     Mu = [[0, -1], [6, 0], [0, 9]]
     Var = [[1, 1], [1, 1], [1, 1]]
     Pi = [1 / n_clusters] * 3
-    W = np.ones((n_points, n_clusters)) / n_clusters
-    Pi = W.sum(axis=0) / W.sum()
+    W = np.ones((n_points, n_clusters)) / n_clusters #隐变量
+    Pi = W.sum(axis=0) / W.sum() #每一簇的比重，可以根据W求得
     # 迭代
     loglh = []
     for i in range(5):

@@ -546,7 +546,7 @@ $$
 \left.Q_{i}\left(z^{(i)}\right)=P\left(z^{(i)} | x^{(i)}, \theta^{j}\right)\right)
 $$
 
-E步骤中，我们的主要目的是更新W。第i个变量属于第m簇的概率为：
+E步骤中，我们的主要目的是更新W。第i个变量属于第m簇的概率为(这里的$\pi_{m}$就是隐变量，我们最开始设置其为1/3，也就代表在当前的均值和方差的情况下，我们隐变量$\pi_{m}的先验概率为1/3$)：
 $$
 W_{i, m}=\frac{\pi_{j} P\left(X_{i} | \mu_{m}, \operatorname{var}_{m}\right)}{\sum_{j=1}^{3} \pi_{j} P\left(X_{i} | \mu_{j}, \operatorname{var}_{j}\right)}
 $$

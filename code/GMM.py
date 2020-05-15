@@ -45,6 +45,7 @@ def update_W(X, Mu, Var, Pi):
     n_points, n_clusters = len(X), len(Pi)
     pdfs = np.zeros(((n_points, n_clusters)))
     for i in range(n_clusters):
+        # multivariate_normal.pdf：多元正态分布的概率密度函数
         pdfs[:, i] = Pi[i] * multivariate_normal.pdf(X, Mu[i], np.diag(Var[i]))
     W = pdfs / pdfs.sum(axis=1).reshape(-1, 1)
     return W

@@ -29,7 +29,13 @@ Maximum Entropy Model and Expectation-maximization algorithm，最大熵模型�
   - <a href = "#数学推导">数学推导</a>
   - <a href = "#EM算法流程">EM算法流程</a>
   - <a href = "#代码实现">代码实现</a>
+    - <a href = "#二维高斯分布">二维高斯分布</a>
     - <a href = "#数据可视化">数据可视化</a>
+    - <a href = "#变量初始化">变量初始化</a>
+    - <a href = "#E步骤">E步骤</a>
+    - <a href = "#M步骤">M步骤</a>
+    - <a href = "#迭代求解">迭代求解</a>
+    - <a href = "#完整代码">完整代码</a>
 - <a href = "#参考文献">参考文献</a>
 
 # [熵等相关概念](#content)
@@ -445,7 +451,7 @@ $$
 \end{array}\right)
 $$
 
-### [数据解析](#content)
+### [数据可视化](#content)
 
 **第一个例子**
 $$
@@ -486,6 +492,312 @@ $$
 **汇总图**
 
 ![clusters](img/clusters.png)
+
+
+
+### [变量初始化](#content)
+首先要对GMM模型参数以及隐变量进行初始化。通常可以用一些固定的值或者随机值。
+
+- n_clusters是GMM模型中聚类的个数，和K-Means一样我们需要提前确定。这里我们除去倾斜的蓝色数据，所以聚类个数为3。
+
+- n_points是样本点的个数。
+
+- Mu是每个高斯分布的均值。
+
+- Var是每个高斯分布的方差，为了过程简便，我们这里假设协方差矩阵都是对角阵。
+
+- W是上面提到的隐变量，也就是每个样本属于每一簇的概率，在初始时，我们可以认为每个样本属于某一簇的概率都是1/3。
+
+- Pi是每一簇的比重，可以根据W求得，在初始时，Pi = [1/3, 1/3, 1/3]
+
+**注：如何确定GMM中的聚类个数**
+
+- 方法一：BIC
+
+$$
+BIC=−2log(L)+klog(n)
+$$
+
+L是likelihood，k是component的个数，n是样本的个数。
+
+- 方法二：cross validation
+
+另一个方法是根据split test的结果（或者说cross validation的结果），先用训练集得到GMM的参数，然后再在测试集上计算log-likelihood。两者明显分叉的地方就是component个数的最佳候选。
+
+![](img/clusters-likehood.png)
+
+参考：[https://scikit-learn.org/stable/auto_examples/mixture/plot_gmm_selection.html#sphx-glr-auto-examples-mixture-plot-gmm-selection-py](https://scikit-learn.org/stable/auto_examples/mixture/plot_gmm_selection.html#sphx-glr-auto-examples-mixture-plot-gmm-selection-py)
+
+```python
+n_clusters = 3
+n_points = len(X)
+Mu = [[0, -1], [6, 0], [0, 9]]
+Var = [[1, 1], [1, 1], [1, 1]]
+Pi = [1 / n_clusters] * 3
+W = np.ones((n_points, n_clusters)) / n_clusters 
+Pi = W.sum(axis=0) / W.sum()
+```
+
+
+
+### [E步骤](#content)
+
+$$
+\left.Q_{i}\left(z^{(i)}\right)=P\left(z^{(i)} | x^{(i)}, \theta^{j}\right)\right)
+$$
+
+E步骤中，我们的主要目的是更新W。第i个变量属于第m簇的概率为：
+$$
+W_{i, m}=\frac{\pi_{j} P\left(X_{i} | \mu_{m}, \operatorname{var}_{m}\right)}{\sum_{j=1}^{3} \pi_{j} P\left(X_{i} | \mu_{j}, \operatorname{var}_{j}\right)}
+$$
+根据W，我们就可以更新每一簇的占比$\pi_{m}$，
+$$
+\pi_{m}=\frac{\sum_{i=1}^{n} W_{i, m}}{\sum_{j=1}^{k} \sum_{i=1}^{n} W_{i, j}}
+$$
+
+```python
+def update_W(X, Mu, Var, Pi):
+    n_points, n_clusters = len(X), len(Pi)
+    pdfs = np.zeros(((n_points, n_clusters)))
+    for i in range(n_clusters):
+        # multivariate_normal.pdf：多元正态分布的概率密度函数
+        pdfs[:, i] = Pi[i] * multivariate_normal.pdf(X, Mu[i], np.diag(Var[i]))
+    W = pdfs / pdfs.sum(axis=1).reshape(-1, 1)
+    return W
+
+
+def update_Pi(W):
+    Pi = W.sum(axis=0) / W.sum()
+    return Pi
+```
+
+以下是计算对数似然函数的logLH以及用来可视化数据的plot_clusters。
+
+$$
+L\left(\theta, \theta^{\prime}\right)=\sum_{i=1}^{m} \sum_{z^{(i)}} Q_{i}\left(z^{(i)}\right) \log P\left(x^{(i)}, z^{(i)} ; \theta\right)
+$$
+
+```python
+def logLH(X, Pi, Mu, Var):
+    n_points, n_clusters = len(X), len(Pi)
+    pdfs = np.zeros(((n_points, n_clusters)))
+    for i in range(n_clusters):
+        pdfs[:, i] = Pi[i] * multivariate_normal.pdf(X, Mu[i], np.diag(Var[i]))
+    return np.mean(np.log(pdfs.sum(axis=1)))
+
+
+def plot_clusters(X, Mu, Var, Mu_true=None, Var_true=None):
+    colors = ['b', 'g', 'r']
+    n_clusters = len(Mu)
+    plt.figure(figsize=(10, 8))
+    plt.axis([-10, 15, -5, 15])
+    plt.scatter(X[:, 0], X[:, 1], s=5)
+    ax = plt.gca()
+    for i in range(n_clusters):
+        plot_args = {'fc': 'None', 'lw': 2, 'edgecolor': colors[i], 'ls': ':'}
+        ellipse = Ellipse(Mu[i], 3 * Var[i][0], 3 * Var[i][1], **plot_args)
+        ax.add_patch(ellipse)
+    if (Mu_true is not None) & (Var_true is not None):
+        for i in range(n_clusters):
+            plot_args = {'fc': 'None', 'lw': 2, 'edgecolor': colors[i], 'alpha': 0.5}
+            ellipse = Ellipse(Mu_true[i], 3 * Var_true[i][0], 3 * Var_true[i][1], **plot_args)
+            ax.add_patch(ellipse)         
+    plt.show()
+```
+
+### [M步骤](#content)
+
+M步骤中，我们需要根据上面一步得到的W来更新均值Mu和方差Var。 Mu和Var是以W的权重的样本X的均值和方差。
+
+因为这里的数据是二维的，第m簇的第k个分量的均值，
+
+$$
+\mu_{m, k}=\frac{\sum_{i=1}^{n} W_{i, m} X_{i, k}}{\sum_{i=1}^{n} W_{i, m}}
+$$
+
+第m簇的第k个分量的方差，
+
+$$
+\operatorname{var}_{m, k}=\frac{\sum_{i=1}^{n} W_{i, m}\left(X_{i, k}-\mu_{m, k}\right)^{2}}{\sum_{i=1}^{n} W_{i, m}}
+$$
+
+以上迭代公式写成如下函数update_Mu和update_Var。
+
+```python
+def update_Mu(X, W):
+    n_clusters = W.shape[1]
+    Mu = np.zeros((n_clusters, 2))
+    for i in range(n_clusters):
+        Mu[i] = np.average(X, axis=0, weights=W[:, i])
+    return Mu
+
+def update_Var(X, Mu, W):
+    n_clusters = W.shape[1]
+    Var = np.zeros((n_clusters, 2))
+    for i in range(n_clusters):
+        Var[i] = np.average((X - Mu[i]) ** 2, axis=0, weights=W[:, i])
+    return Var
+```
+
+### [迭代求解](#content)
+
+下面我们进行迭代求解。
+
+图中实线是真实的高斯分布，虚线是我们估计出的高斯分布。可以看出，经过5次迭代之后，两者几乎完全重合。
+
+```python
+loglh = []
+for i in range(5):
+    plot_clusters(X, Mu, Var, [mu1, mu2, mu3], [var1, var2, var3])
+    loglh.append(logLH(X, Pi, Mu, Var))
+    W = update_W(X, Mu, Var, Pi)
+    Pi = update_Pi(W)
+    Mu = update_Mu(X, W)
+    print('log-likehood:%.3f'%loglh[-1])
+    Var = update_Var(X, Mu, W)
+```
+
+每次迭代的log-likehood如下
+
+```python
+log-likehood:-8.163
+log-likehood:-4.701
+log-likehood:-4.698
+log-likehood:-4.697
+log-likehood:-4.697
+```
+
+![](img/em1.png)
+![](img/em2.png)
+![](img/em3.png)
+![](img/em4.png)
+![](img/em5.png)
+
+### [完整代码](#content)
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.patches import Ellipse
+from scipy.stats import multivariate_normal
+plt.style.use('seaborn')
+
+def generate_X(true_Mu, true_Var):
+    '''
+    生成三个高斯分布数据
+    :param true_Mu: 均值
+    :param true_Var: 方差
+    :return:
+    '''
+    # 第一簇的数据
+    num1, mu1, var1 = 400, true_Mu[0], true_Var[0]
+    X1 = np.random.multivariate_normal(mu1, np.diag(var1), num1)
+    # 第二簇的数据
+    num2, mu2, var2 = 600, true_Mu[1], true_Var[1]
+    X2 = np.random.multivariate_normal(mu2, np.diag(var2), num2)
+    # 第三簇的数据
+    num3, mu3, var3 = 1000, true_Mu[2], true_Var[2]
+    X3 = np.random.multivariate_normal(mu3, np.diag(var3), num3)
+    # 合并在一起
+    X = np.vstack((X1, X2, X3))
+    # 显示数据
+    plt.figure(figsize=(10, 8))
+    plt.axis([-10, 15, -5, 15])
+    plt.scatter(X1[:, 0], X1[:, 1], s=5)
+    plt.scatter(X2[:, 0], X2[:, 1], s=5)
+    plt.scatter(X3[:, 0], X3[:, 1], s=5)
+    plt.show()
+    return X
+
+# E步骤更新W，也就是第i个变量属于第m簇的概率
+# 更新W
+def update_W(X, Mu, Var, Pi):
+    n_points, n_clusters = len(X), len(Pi)
+    pdfs = np.zeros(((n_points, n_clusters)))
+    for i in range(n_clusters):
+        # multivariate_normal.pdf：多元正态分布的概率密度函数
+        pdfs[:, i] = Pi[i] * multivariate_normal.pdf(X, Mu[i], np.diag(Var[i]))
+    W = pdfs / pdfs.sum(axis=1).reshape(-1, 1)
+    return W
+
+# 根据更新的W，更新每一簇的占比
+# 更新pi
+def update_Pi(W):
+    Pi = W.sum(axis=0) / W.sum()
+    return Pi
+
+
+# 计算log似然函数
+def logLH(X, Pi, Mu, Var):
+    n_points, n_clusters = len(X), len(Pi)
+    pdfs = np.zeros(((n_points, n_clusters)))
+    for i in range(n_clusters):
+        pdfs[:, i] = Pi[i] * multivariate_normal.pdf(X, Mu[i], np.diag(Var[i]))
+    return np.mean(np.log(pdfs.sum(axis=1)))
+
+
+# 画出聚类图像
+def plot_clusters(X, Mu, Var, Mu_true=None, Var_true=None):
+    colors = ['b', 'g', 'r']
+    n_clusters = len(Mu)
+    plt.figure(figsize=(10, 8))
+    plt.axis([-10, 15, -5, 15])
+    plt.scatter(X[:, 0], X[:, 1], s=5)
+    ax = plt.gca()
+    for i in range(n_clusters):
+        plot_args = {'fc': 'None', 'lw': 2, 'edgecolor': colors[i], 'ls': ':'}
+        ellipse = Ellipse(Mu[i], 3 * Var[i][0], 3 * Var[i][1], **plot_args)
+        ax.add_patch(ellipse)
+    if (Mu_true is not None) & (Var_true is not None):
+        for i in range(n_clusters):
+            plot_args = {'fc': 'None', 'lw': 2, 'edgecolor': colors[i], 'alpha': 0.5}
+            ellipse = Ellipse(Mu_true[i], 3 * Var_true[i][0], 3 * Var_true[i][1], **plot_args)
+            ax.add_patch(ellipse)
+    plt.show()
+
+# M步根据更新的W和PI来跟新均值Mu与方差Var
+# 更新Mu
+def update_Mu(X, W):
+    n_clusters = W.shape[1]
+    Mu = np.zeros((n_clusters, 2))
+    for i in range(n_clusters):
+        Mu[i] = np.average(X, axis=0, weights=W[:, i])
+    return Mu
+
+
+# 更新Var
+def update_Var(X, Mu, W):
+    n_clusters = W.shape[1]
+    Var = np.zeros((n_clusters, 2))
+    for i in range(n_clusters):
+        Var[i] = np.average((X - Mu[i]) ** 2, axis=0, weights=W[:, i])
+    return Var
+
+
+if __name__ == '__main__':
+    # 生成数据
+    true_Mu = [[0.5, 0.5], [5.5, 2.5], [1, 7]]
+    true_Var = [[1, 3], [2, 2], [6, 2]]
+    X = generate_X(true_Mu, true_Var)
+    # 初始化
+    n_clusters = 3 #聚类的个数
+    n_points = len(X)
+    Mu = [[0, -1], [6, 0], [0, 9]]
+    Var = [[1, 1], [1, 1], [1, 1]]
+    Pi = [1 / n_clusters] * 3
+    W = np.ones((n_points, n_clusters)) / n_clusters #隐变量
+    Pi = W.sum(axis=0) / W.sum() #每一簇的比重，可以根据W求得
+    # 迭代
+    loglh = []
+    for i in range(5):
+        plot_clusters(X, Mu, Var, true_Mu, true_Var)
+        loglh.append(logLH(X, Pi, Mu, Var))
+        W = update_W(X, Mu, Var, Pi)
+        Pi = update_Pi(W)
+        Mu = update_Mu(X, W)
+        print('log-likehood:%.3f'%loglh[-1])
+        Var = update_Var(X, Mu, W)
+```
 
 ## [参考文献](#content)
 
